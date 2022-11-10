@@ -57,12 +57,10 @@ export const App = () => {
       setStatus('resolved');
     }
 
-    try {
-      fetchData();
-    } catch (error) {
+    fetchData().catch(error => {
       console.log(error);
       setStatus('error');
-    }
+    });
   }, [query, page]);
 
   return (
@@ -84,7 +82,7 @@ export const App = () => {
       )}
 
       {<ImageGallery images={images} onModal={onModal} />}
-      {status !== 'empty' && totalPages !== page && (
+      {images.length !== 0 && totalPages !== page && (
         <LoadMoreBtn onLoadMore={onLoadMore} status={status} />
       )}
 
