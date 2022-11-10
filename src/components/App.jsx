@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ToastContainer } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 
 import { fetchPictures } from './utils/api/imageAPI';
 import {
@@ -22,7 +22,7 @@ export const App = () => {
   const [status, setStatus] = useState('idle');
 
   const handleFormSubmit = newQuery => {
-    if (query === newQuery) return;
+    if (query === newQuery) return toast('You need to type something new');
     setQuery(newQuery);
     setPage(1);
     setImages([]);
@@ -35,9 +35,7 @@ export const App = () => {
   const clearLargeImage = () => setLargeImage('');
 
   useEffect(() => {
-    if (query === '') {
-      return;
-    }
+    if (query === '') return;
 
     setStatus('pending');
 
