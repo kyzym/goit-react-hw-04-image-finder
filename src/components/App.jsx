@@ -20,12 +20,14 @@ export class App extends Component {
     totalImages: 0,
     largeImage: '',
     status: 'idle',
+    totalPages: 1,
   };
 
   handleFormSubmit = query => {
     this.setState({
       query,
       page: 1,
+      images: [],
     });
   };
 
@@ -62,6 +64,7 @@ export class App extends Component {
 
       this.setState(prevState => ({
         images: [...prevState.images, ...hits],
+        totalPages: Math.ceil(fetchedImages.total / 12),
         totalImages: fetchedImages.totalHits,
         status: 'resolved',
       }));
@@ -73,8 +76,8 @@ export class App extends Component {
 
   render() {
     const { handleFormSubmit, onLoadMore, onModal, clearLargeImage } = this;
-    const { images, status, totalImages, page, largeImage } = this.state;
-    const restOfImages = totalImages - page * 12;
+    const { images, status, totalImages, page, largeImage, totalPages } =
+      this.state;
 
     return (
       <SC.App>
@@ -97,14 +100,11 @@ export class App extends Component {
         )}
 
         {status === 'error' && (
-          <Message
-            message="We have a problem. We have to look at the console logs."
-            status={status}
-          />
+          <Message message="Hm... Refresh the page please." status={status} />
         )}
 
         {<ImageGallery images={images} onModal={onModal} />}
-        {restOfImages > 0 && images.length > 0 && (
+        {totalPages !== page && (
           <LoadMoreBtn onLoadMore={onLoadMore} status={status} />
         )}
 
