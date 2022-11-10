@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastContainer } from 'react-toastify';
 
 import { fetchPictures } from './utils/api/imageAPI';
@@ -9,113 +10,91 @@ import {
   Loader,
   Message,
   Modal,
-} from './utils/AppComponensMap';
+} from './utils/AppComponentsMap';
 import * as SC from 'components/App.styled';
 
-export class App extends Component {
-  state = {
-    images: [],
-    query: '',
-    page: 1,
-    totalImages: 0,
-    largeImage: '',
-    status: 'idle',
-    totalPages: 1,
+export const App = () => {
+  const [images, setImages] = useState([]);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalImages, setTotalImages] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [largeImage, setLargeImage] = useState('');
+  const [status, setStatus] = useState('idle');
+
+  const handleFormSubmit = query => {
+    setQuery(query);
+    setPage(1);
+    setImages([]);
   };
 
-  handleFormSubmit = query => {
-    this.setState({
-      query,
-      page: 1,
-      images: [],
-    });
-  };
+  const onLoadMore = () => setPage(state => state + 1);
 
-  onLoadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
-  };
+  const onModal = imageUrl => setLargeImage(imageUrl);
 
-  onModal = imageUrl => {
-    this.setState({ largeImage: imageUrl });
-  };
+  const clearLargeImage = () => setLargeImage('');
 
-  clearLargeImage = () => {
-    this.setState({ largeImage: '' });
-  };
-
-  async componentDidUpdate(_, prevState) {
-    const { query, page } = this.state;
-
-    if (prevState.query === query && prevState.page === page) {
+  useEffect(() => {
+    if (query === '') {
       return;
     }
 
-    this.setState({ status: 'pending' });
+    setStatus('pending');
 
-    try {
+    async function fetchData() {
       const fetchedImages = await fetchPictures(query, page);
       const { hits } = fetchedImages;
 
       if (hits.length === 0) {
-        return this.setState({ status: 'empty', images: [] });
+        setStatus('empty');
+        setImages([]);
+        return;
       }
 
-      this.setState(prevState => ({
-        images: [...prevState.images, ...hits],
-        totalPages: Math.ceil(fetchedImages.total / 12),
-        totalImages: fetchedImages.totalHits,
-        status: 'resolved',
-      }));
+      setImages(state => [...state, ...hits]);
+      setTotalPages(Math.ceil(fetchedImages.total / 12));
+      setTotalImages(fetchedImages.totalHits);
+      setStatus('resolved');
+    }
+
+    try {
+      fetchData();
     } catch (error) {
       console.log(error);
-      this.setState({ status: 'error' });
+      setStatus('error');
     }
-  }
+  }, [query, page]);
 
-  render() {
-    const { handleFormSubmit, onLoadMore, onModal, clearLargeImage } = this;
-    const { images, status, totalImages, page, largeImage, totalPages } =
-      this.state;
+  return (
+    <SC.App>
+      <Searchbar onSubmit={handleFormSubmit} />
 
-    return (
-      <SC.App>
-        <Searchbar onSubmit={handleFormSubmit} />
+      {status === 'pending' && totalImages === 0 && <Loader />}
 
-        {status === 'pending' && totalImages === 0 && <Loader />}
+      {status === 'idle' && (
+        <Message message="I lost the image, please find it." status={status} />
+      )}
 
-        {status === 'idle' && (
-          <Message
-            message="I lost the image, please find it."
-            status={status}
-          />
-        )}
+      {status === 'empty' && (
+        <Message message="We didn't find anything. It's sad." status={status} />
+      )}
 
-        {status === 'empty' && (
-          <Message
-            message="We didn't find anything. It's sad."
-            status={status}
-          />
-        )}
+      {status === 'error' && (
+        <Message message="Hm... Refresh the page please." status={status} />
+      )}
 
-        {status === 'error' && (
-          <Message message="Hm... Refresh the page please." status={status} />
-        )}
+      {<ImageGallery images={images} onModal={onModal} />}
+      {status !== 'empty' && totalPages !== page && (
+        <LoadMoreBtn onLoadMore={onLoadMore} status={status} />
+      )}
 
-        {<ImageGallery images={images} onModal={onModal} />}
-        {totalPages !== page && (
-          <LoadMoreBtn onLoadMore={onLoadMore} status={status} />
-        )}
+      {largeImage && (
+        <Modal clearImage={clearLargeImage}>
+          <img src={largeImage} alt="Sorry, nothing here " />
+        </Modal>
+      )}
 
-        {largeImage && (
-          <Modal clearImage={clearLargeImage}>
-            <img src={largeImage} alt="Sorry, nothing here " />
-          </Modal>
-        )}
-
-        <ToastContainer autoClose={1000} />
-      </SC.App>
-    );
-  }
-}
+      <ToastContainer autoClose={1000} />
+    </SC.App>
+  );
+};

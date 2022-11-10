@@ -1,40 +1,38 @@
-import { Component } from 'react';
 import PropTypes from 'prop-types';
 import * as SC from './Modal.styled';
 import { createPortal } from 'react-dom';
+import { useEffect } from 'react';
 
 const ModalRoot = document.querySelector('#modal-root');
 
-export class Modal extends Component {
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleKeyDown);
-  }
+export const Modal = ({ clearImage, children }) => {
+  useEffect(() => {
+    const handleKeyDown = e => {
+      if (e.code === 'Escape') {
+        clearImage();
+      }
+    };
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleKeyDown);
-  }
+    window.addEventListener('keydown', handleKeyDown);
 
-  handleKeyDown = e => {
-    if (e.code === 'Escape') {
-      this.props.clearImage();
-    }
-  };
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [clearImage]);
 
-  handleBackdropClick = e => {
+  const handleBackdropClick = e => {
     if (e.currentTarget === e.target) {
-      this.props.clearImage();
+      clearImage();
     }
   };
 
-  render() {
-    return createPortal(
-      <SC.Overlay onClick={this.handleBackdropClick}>
-        <SC.Modal>{this.props.children}</SC.Modal>
-      </SC.Overlay>,
-      ModalRoot
-    );
-  }
-}
+  return createPortal(
+    <SC.Overlay onClick={handleBackdropClick}>
+      <SC.Modal>{children}</SC.Modal>
+    </SC.Overlay>,
+    ModalRoot
+  );
+};
 
 Modal.propTypes = {
   handleBackdropClick: PropTypes.func,
