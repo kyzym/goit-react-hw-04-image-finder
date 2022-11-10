@@ -1,4 +1,3 @@
-import { Component } from 'react';
 import { useState, useEffect } from 'react';
 import { ToastContainer } from 'react-toastify';
 
@@ -22,8 +21,9 @@ export const App = () => {
   const [largeImage, setLargeImage] = useState('');
   const [status, setStatus] = useState('idle');
 
-  const handleFormSubmit = query => {
-    setQuery(query);
+  const handleFormSubmit = newQuery => {
+    if (query === newQuery) return;
+    setQuery(newQuery);
     setPage(1);
     setImages([]);
   };
